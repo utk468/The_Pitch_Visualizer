@@ -1,0 +1,114 @@
+:root {
+    --bg-base: #020202; /* Deep Obsidian */
+    --sidebar-bg: rgba(5, 5, 5, 0.6);
+    --card-bg: rgba(255, 255, 255, 0.02);
+    --glass-blur: blur(40px);
+    --accent-glow: 0 0 20px rgba(255, 255, 255, 0.05);
+    --text-main: #ffffff;
+    --text-muted: #888899; /* Interstellar Gray */
+    --border-glass: rgba(255, 255, 255, 0.06);
+    --border-active: rgba(255, 255, 255, 0.15);
+    --sidebar-width: 320px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    /* Ultra-subtle deep texture */
+    background-image: 
+        radial-gradient(circle at 50% -20%, rgba(255,255,255,0.03), transparent 50%),
+        linear-gradient(var(--border-glass) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
+    background-size: 100% 100%, 60px 60px, 60px 60px;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar Styling - Celestial Float */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    border-right: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+    padding: 2.5rem 1.75rem;
+    position: relative;
+    z-index: 10;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 3.5rem;
+}
+
+.logo-icon {
+    width: 44px;
+    height: 44px;
+    background: #111;
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+}
+
+.logo-text {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: radial-gradient(ellipse at top center, rgba(255,255,255,0.01) 0%, transparent 80%);
+}
+
+/* Scrollbar Styling - Minimalist Celestial */
+::-webkit-scrollbar {
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}

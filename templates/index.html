@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Triage AI - Gemini Style</title>
+    <link rel="stylesheet" href="/static/css/global.css">
+    <link rel="stylesheet" href="/static/css/sidebar.css">
+    <link rel="stylesheet" href="/static/css/chat.css">
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Force-applying premium styles to the New Chat button */
+        #new-chat-btn.new-chat-btn {
+            width: 100% !important;
+            padding: 1.15rem 1.5rem !important;
+            background: linear-gradient(135deg, #ff8c00 0%, #ff4500 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 14px !important;
+            font-weight: 700 !important;
+            font-size: 0.95rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
+            margin-bottom: 2.5rem !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.2) !important;
+        }
+        #new-chat-btn.new-chat-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(255, 69, 0, 0.4) !important;
+            filter: brightness(1.1) !important;
+        }
+
+        /* Force-applying premium styles to the Logout button */
+        #logout-btn.logout-btn {
+            width: 100% !important;
+            padding: 1rem 1.5rem !important;
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 14px !important;
+            font-weight: 700 !important;
+            font-size: 0.95rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 12px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(255, 75, 43, 0.2) !important;
+        }
+        #logout-btn.logout-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(255, 75, 43, 0.4) !important;
+            filter: brightness(1.1) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon"><i data-lucide="activity" style="color: #fff; width: 22px; height: 22px;"></i></div>
+            <span class="logo-text">Medical AI</span>
+        </div>
+
+        <button id="new-chat-btn" class="new-chat-btn">
+            <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+            <span>New Chat</span>
+        </button>
+
+        <section class="sidebar-section">
+            <h3 class="sidebar-title"><i data-lucide="history" style="width: 14px; height: 14px;"></i> Recent Chats</h3>
+            <div id="thread-list" class="thread-list">
+                <!-- Threads will be injected here -->
+            </div>
+        </section>
+
+        <section class="sidebar-section">
+            <h3 class="sidebar-title"><i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i> Risk Assessment</h3>
+            <div id="risk-badge" class="risk-badge risk-normal">Normal</div>
+        </section>
+
+        <section class="sidebar-section">
+            <h3 class="sidebar-title"><i data-lucide="stethoscope" style="width: 14px; height: 14px;"></i> Extracted Symptoms</h3>
+            <div id="symptom-list" class="symptom-list">
+                <span class="symptom-tag">None detected</span>
+            </div>
+        </section>
+
+        <div class="sidebar-footer">
+            <button id="logout-btn" class="logout-btn">
+                <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Chat Workspace -->
+    <main class="main-content">
+        <div class="chat-container">
+            <div id="chat-history" class="chat-scroll-area">
+                <div class="message message-bot">
+                    <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="bot" style="width:20px; height:20px;"></i> Hello, I'm your Medical Triage assistant.</h3>
+                    <p style="margin-top: 0.5rem; color: var(--text-muted);">Describe your symptoms or ask medical questions. I can help assess urgency and provide clinical context.</p>
+                </div>
+            </div>
+
+            <!-- Interaction Layer -->
+            <form id="chat-form" class="input-wrapper">
+                <input type="text" id="chat-input" class="chat-input" placeholder="Type symptoms or medical questions..." autocomplete="off">
+                <button type="submit" id="send-btn" class="send-btn">
+                    <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="/static/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

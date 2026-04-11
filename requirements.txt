@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+langgraph
+langchain-groq
+langchain-core
+langchain
+pydantic
+python-dotenv
+jinja2
+aiofiles
+python-multipart
+motor
+pyjwt[crypto]
+passlib[bcrypt]
+gunicorn
