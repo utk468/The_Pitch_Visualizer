@@ -34,12 +34,22 @@ const API = {
         const response = await fetch(`${API_BASE}/threads/?token=${token}`, {
             method: 'POST'
         });
+        if (!response.ok) {
+            const err = await response.json();
+            const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+            throw new Error(detail || 'Failed to create thread');
+        }
         return await response.json();
     },
 
     listThreads: async () => {
         const token = localStorage.getItem('access_token');
         const response = await fetch(`${API_BASE}/threads/?token=${token}`);
+        if (!response.ok) {
+            const err = await response.json();
+            const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+            throw new Error(detail || 'Failed to list threads');
+        }
         return await response.json();
     },
 
@@ -48,12 +58,22 @@ const API = {
         const response = await fetch(`${API_BASE}/threads/${threadId}?token=${token}`, {
             method: 'DELETE'
         });
+        if (!response.ok) {
+            const err = await response.json();
+            const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+            throw new Error(detail || 'Failed to delete thread');
+        }
         return await response.json();
     },
 
     getThread: async (threadId) => {
         const token = localStorage.getItem('access_token');
         const response = await fetch(`${API_BASE}/threads/${threadId}?token=${token}`);
+        if (!response.ok) {
+            const err = await response.json();
+            const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+            throw new Error(detail || 'Failed to get thread');
+        }
         return await response.json();
     },
 
