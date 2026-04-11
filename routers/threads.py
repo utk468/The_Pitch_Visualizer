@@ -10,7 +10,9 @@ load_dotenv()
 
 router = APIRouter()
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-it")
+SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = "temporary_secret_key_change_me_in_production"
 ALGORITHM = "HS256"
 
 async def get_current_user_id(token: str):

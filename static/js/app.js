@@ -214,8 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If no thread, create one first
         if (!currentThreadId) {
-            const newThread = await API.createThread();
-            currentThreadId = newThread.thread_id;
+            try {
+                const newThread = await API.createThread();
+                currentThreadId = newThread.thread_id;
+            } catch (err) {
+                appendMessage('Error creating session: ' + err.message, 'bot');
+                return;
+            }
         }
 
         appendMessage(msg, 'user');
@@ -240,12 +245,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderThreads();
             }
         } catch (err) {
-            chatHistory.removeChild(typingDiv);
+            if (chatHistory.contains(typingDiv)) {
+                chatHistory.removeChild(typingDiv);
+            }
             appendMessage('Error: ' + err.message, 'bot');
             
             if (err.message.includes('Unauthorized')) {
                 window.location.href = '/login';
             }
+        }
+    });
+
+    // Explicit Enter-to-Submit support for reliability
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
         }
     });
 });
