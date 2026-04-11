@@ -78,7 +78,8 @@ const API = {
             })
         });
         if (!response.ok) {
-            throw new Error('Chat failed');
+            const err = await response.json();
+            throw new Error(err.detail || 'Chat failed');
         }
         return await response.json();
     }
