@@ -79,7 +79,8 @@ const API = {
         });
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.detail || 'Chat failed');
+            const detail = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail);
+            throw new Error(detail || 'Chat failed');
         }
         return await response.json();
     }
