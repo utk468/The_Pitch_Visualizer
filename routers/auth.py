@@ -21,10 +21,12 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password[:72])
+    pwd_bytes = password.encode("utf-8")[:72]
+    return pwd_context.hash(pwd_bytes.decode("utf-8", "ignore"))
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password[:72], hashed_password)
+    pwd_bytes = plain_password.encode("utf-8")[:72]
+    return pwd_context.verify(pwd_bytes.decode("utf-8", "ignore"), hashed_password)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
