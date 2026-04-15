@@ -1,266 +1,206 @@
 import API from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Chat Elements
-    const chatHistory = document.getElementById('chat-history');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const riskBadge = document.getElementById('risk-badge');
-    const symptomList = document.getElementById('symptom-list');
-    
-    // Thread Elements
+    // UI Elements
     const threadList = document.getElementById('thread-list');
-    const newChatBtn = document.getElementById('new-chat-btn');
-    const logoutBtn = document.getElementById('logout-btn');
+    const storyboardContainer = document.getElementById('storyboard-container');
+    const narrativeInput = document.getElementById('narrative-input');
+    const generateBtn = document.getElementById('generate-btn');
+    const loader = document.getElementById('loader');
+    const styleSelect = document.getElementById('style-select');
+    const selectedStyleLabel = document.getElementById('selected-style');
+    const dropdownOptions = document.getElementById('dropdown-options');
 
-    let history = [];
     let currentThreadId = null;
 
-    // --- Authentication ---
+    // --- Authentication Check ---
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!token || !user) {
         window.location.href = '/login';
         return;
     }
 
-    // Logout Logic
-    logoutBtn.onclick = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-    };
-
     // --- Thread Management ---
 
     const renderThreads = async () => {
-        const threads = await API.listThreads();
-        threadList.innerHTML = '';
-        
-        // Grouping logic
-        const groups = {
-            'Today': [],
-            'Yesterday': [],
-            'Previous': []
-        };
+        try {
+            const threads = await API.listThreads();
+            if (!threadList) return;
+            threadList.innerHTML = '';
 
-        const now = new Date();
-        const yesterday = new Date();
-        yesterday.setDate(now.getDate() - 1);
+            const groups = { 'Today': [], 'Yesterday': [], 'Previous': [] };
+            const now = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(now.getDate() - 1);
 
-        threads.reverse().forEach(thread => {
-            const threadDate = new Date(thread.created_at);
-            if (threadDate.toDateString() === now.toDateString()) {
-                groups['Today'].push(thread);
-            } else if (threadDate.toDateString() === yesterday.toDateString()) {
-                groups['Yesterday'].push(thread);
-            } else {
-                groups['Previous'].push(thread);
-            }
-        });
-
-        Object.keys(groups).forEach(groupName => {
-            if (groups[groupName].length === 0) return;
-
-            const header = document.createElement('div');
-            header.className = 'thread-group-header';
-            header.innerText = groupName;
-            threadList.appendChild(header);
-
-            groups[groupName].forEach(thread => {
-                const item = document.createElement('div');
-                item.className = `thread-item ${currentThreadId === thread.thread_id ? 'active' : ''}`;
-                item.innerHTML = `
-                    <div class="thread-main">
-                        <i data-lucide="message-square" style="width: 14px; height: 14px; opacity: 0.6;"></i>
-                        <div class="thread-info" title="${thread.title}">${thread.title}</div>
-                    </div>
-                    <div class="delete-thread" data-id="${thread.thread_id}">
-                        <i data-lucide="x" style="width: 14px; height: 14px;"></i>
-                    </div>
-                `;
-                
-                item.onclick = (e) => {
-                    if (e.target.closest('.delete-thread')) return;
-                    switchThread(thread.thread_id);
-                };
-
-                const delBtn = item.querySelector('.delete-thread');
-                delBtn.onclick = async (e) => {
-                    e.stopPropagation();
-                    if (confirm('Delete this conversation?')) {
-                        await API.deleteThread(thread.thread_id);
-                        if (currentThreadId === thread.thread_id) {
-                            currentThreadId = null;
-                            chatHistory.innerHTML = '';
-                        }
-                        renderThreads();
-                    }
-                };
-                threadList.appendChild(item);
+            [...threads].reverse().forEach(thread => {
+                const threadDate = new Date(thread.created_at);
+                if (threadDate.toDateString() === now.toDateString()) {
+                    groups['Today'].push(thread);
+                } else if (threadDate.toDateString() === yesterday.toDateString()) {
+                    groups['Yesterday'].push(thread);
+                } else {
+                    groups['Previous'].push(thread);
+                }
             });
-        });
-        
-        lucide.createIcons();
+
+            Object.keys(groups).forEach(groupName => {
+                if (groups[groupName].length === 0) return;
+
+                const header = document.createElement('div');
+                header.className = 'thread-group-header';
+                header.innerText = groupName;
+                threadList.appendChild(header);
+
+                groups[groupName].forEach(thread => {
+                    const item = document.createElement('div');
+                    item.className = `thread-item ${currentThreadId === thread.thread_id ? 'active' : ''}`;
+                    item.innerHTML = `
+                        <div class="thread-main">
+                            <div class="thread-info" title="${thread.title}">${thread.title}</div>
+                        </div>
+                        <div class="delete-thread" data-id="${thread.thread_id}">
+                            <span class="delete-icon">×</span>
+                        </div>
+                    `;
+
+                    item.onclick = (e) => {
+                        if (e.target.closest('.delete-thread')) return;
+                        switchThread(thread.thread_id);
+                    };
+
+                    const delBtn = item.querySelector('.delete-thread');
+                    delBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this storyboard?')) {
+                            await API.deleteThread(thread.thread_id);
+                            if (currentThreadId === thread.thread_id) {
+                                startNewChat();
+                            } else {
+                                renderThreads();
+                            }
+                        }
+                    };
+                    threadList.appendChild(item);
+                });
+            });
+        } catch (err) {
+            console.error('Failed to load threads:', err);
+        }
     };
 
     const switchThread = async (threadId) => {
         try {
-            console.log(`Switching to thread: ${threadId}`);
             currentThreadId = threadId;
+            if (storyboardContainer) storyboardContainer.innerHTML = '';
+            if (loader) loader.style.display = 'block';
+
             const thread = await API.getThread(threadId);
-            
-            // Clear UI
-            chatHistory.innerHTML = '';
-            history = [];
-            
+
             if (thread && thread.messages) {
-                console.log(`Loading ${thread.messages.length} messages`);
-                // Load messages
-                thread.messages.forEach(msg => {
-                    // 1. Check for new nested structure
-                    let text = "";
-                    let role = "";
-
-                    if (msg.user) {
-                        text = msg.user.query;
-                        role = "user";
-                    } else if (msg.bot) {
-                        text = msg.bot.response;
-                        role = "bot";
-                    } else {
-                        // 2. Fallback for older flat/split structures
-                        text = msg.query || msg.response || msg.content || "";
-                        role = msg.role || (msg.query ? "user" : "bot");
-                    }
-
-                    if (text) {
-                        appendMessage(text, role);
-                        history.push(text);
-                    }
-                });
-
-                // Update Dashboard with last bot message
-                const lastMsgWithBot = [...thread.messages].reverse().find(m => m.bot || (m.role === 'bot'));
-                const lastBotData = lastMsgWithBot ? (lastMsgWithBot.bot || lastMsgWithBot) : null;
-                
-                if (lastBotData) {
-                    updateDashboard(lastBotData.risk_level, lastBotData.symptoms);
-                } else {
-                    updateDashboard('Normal', []);
+                const lastBotMsg = [...thread.messages].reverse().find(m => m.bot && m.bot.storyboard);
+                if (lastBotMsg && lastBotMsg.bot.storyboard) {
+                    renderStoryboard(lastBotMsg.bot.storyboard);
                 }
-            } else {
-                console.warn("Thread has no messages or failed to load");
-                updateDashboard('Normal', []);
             }
-
             renderThreads();
         } catch (error) {
             console.error("Error switching thread:", error);
-            appendMessage("Failed to load conversation history.", "bot");
+        } finally {
+            if (loader) loader.style.display = 'none';
         }
     };
 
-    newChatBtn.onclick = async () => {
-        const newThread = await API.createThread();
-        currentThreadId = newThread.thread_id;
-        chatHistory.innerHTML = '';
-        history = [];
-        updateDashboard('Normal', []);
+    const startNewChat = () => {
+        currentThreadId = null;
+        if (storyboardContainer) storyboardContainer.innerHTML = '';
+        if (narrativeInput) narrativeInput.value = '';
         renderThreads();
     };
 
-    // Initialize
-    renderThreads();
-
-    // --- Chat Logic ---
-
-    const appendMessage = (text, sender) => {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', `message-${sender}`);
-        messageDiv.innerText = text;
-        chatHistory.appendChild(messageDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+    const renderStoryboard = (panels) => {
+        if (!storyboardContainer) return;
+        storyboardContainer.innerHTML = panels.map((p, i) => `
+            <div class="panel">
+                <img src="${p.image_url}" alt="Panel ${i+1}" loading="lazy">
+                <div class="panel-content">
+                    <div class="panel-text">${p.text}</div>
+                    <div class="panel-prompt">${p.prompt}</div>
+                </div>
+            </div>
+        `).join('');
+        storyboardContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    const updateDashboard = (risk, symptoms) => {
-        riskBadge.innerText = risk || 'Normal';
-        riskBadge.className = 'risk-badge';
-        const lowerRisk = (risk || 'Normal').toLowerCase();
-        if (lowerRisk.includes('emergency')) {
-            riskBadge.classList.add('risk-emergency');
-        } else if (lowerRisk.includes('moderate')) {
-            riskBadge.classList.add('risk-moderate');
-        } else {
-            riskBadge.classList.add('risk-normal');
-        }
+    // --- Generation Logic ---
 
-        symptomList.innerHTML = '';
-        if (!symptoms || symptoms.length === 0) {
-            symptomList.innerHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">None detected</span>';
-        } else {
-            symptoms.forEach(s => {
-                const tag = document.createElement('span');
-                tag.classList.add('symptom-tag');
-                tag.innerText = s;
-                symptomList.appendChild(tag);
-            });
-        }
-    };
+    if (generateBtn) {
+        generateBtn.onclick = async () => {
+            const text = narrativeInput.value.trim();
+            if(!text) return alert("Please enter a narrative.");
 
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const msg = chatInput.value.trim();
-        if (!msg) return;
+            if(!currentThreadId) {
+                try {
+                    const newThread = await API.createThread();
+                    currentThreadId = newThread.thread_id;
+                } catch (e) {
+                    return alert("Failed to create storyboard session: " + e.message);
+                }
+            }
 
-        // If no thread, create one first
-        if (!currentThreadId) {
+            if (storyboardContainer) storyboardContainer.innerHTML = '';
+            if (loader) loader.style.display = 'block';
+            generateBtn.disabled = true;
+
             try {
-                const newThread = await API.createThread();
-                currentThreadId = newThread.thread_id;
-            } catch (err) {
-                appendMessage('Error creating session: ' + err.message, 'bot');
-                return;
+                const style = styleSelect ? styleSelect.value : 'digital_art';
+                const data = await API.sendMessage(text, currentThreadId, style);
+                
+                if(data.storyboard) {
+                    renderStoryboard(data.storyboard);
+                    renderThreads(); 
+                } else {
+                    alert("Error: " + (data.message || "Generation failed"));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            } finally {
+                if (loader) loader.style.display = 'none';
+                generateBtn.disabled = false;
             }
-        }
+        };
+    }
 
-        appendMessage(msg, 'user');
-        chatInput.value = '';
-        
-        const typingDiv = document.createElement('div');
-        typingDiv.classList.add('message', 'message-bot');
-        typingDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-        chatHistory.appendChild(typingDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+    // --- Dropdown Management ---
 
-        try {
-            const data = await API.sendMessage(msg, currentThreadId, history);
-            chatHistory.removeChild(typingDiv);
-            appendMessage(data.response, 'bot');
-            updateDashboard(data.risk_level, data.symptoms);
-            history.push(msg);
-            history.push(data.response);
-            
-            // Re-render threads to update titles if first message
-            if (history.length <= 2) {
-                renderThreads();
-            }
-        } catch (err) {
-            if (chatHistory.contains(typingDiv)) {
-                chatHistory.removeChild(typingDiv);
-            }
-            appendMessage('Error: ' + err.message, 'bot');
-            
-            if (err.message.includes('Unauthorized')) {
-                window.location.href = '/login';
-            }
+    window.toggleDropdown = () => {
+        if (dropdownOptions) dropdownOptions.classList.toggle('active');
+    };
+
+    window.selectStyle = (val, label) => {
+        if (styleSelect) styleSelect.value = val;
+        if (selectedStyleLabel) selectedStyleLabel.innerText = label;
+        if (dropdownOptions) dropdownOptions.classList.remove('active');
+    };
+
+    window.addEventListener('click', (e) => {
+        const styleDropdown = document.getElementById('style-dropdown');
+        if (styleDropdown && !styleDropdown.contains(e.target)) {
+            if (dropdownOptions) dropdownOptions.classList.remove('active');
         }
     });
 
-    // Explicit Enter-to-Submit support for reliability
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-    });
+    // --- Global Actions ---
+
+    window.logout = () => {
+        localStorage.clear();
+        window.location.href = '/login';
+    };
+
+    window.startNewChat = startNewChat;
+    window.selectThread = switchThread;
+
+    // --- Initialize ---
+    renderThreads();
 });

@@ -16,9 +16,7 @@ router = APIRouter()
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET_KEY")
-if not SECRET_KEY:
-    SECRET_KEY = "temporary_secret_key_change_me_in_production"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 
 
@@ -43,12 +41,10 @@ def create_access_token(data: dict):
 @router.post("/register")
 async def register(profile: UserRegister):
     await db_manager.connect()
-    # Check if user already exists
     existing_user = await db_manager.db.users.find_one({"email": profile.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create new user
     new_user = UserDetails(
         name=profile.name,
         email=profile.email,

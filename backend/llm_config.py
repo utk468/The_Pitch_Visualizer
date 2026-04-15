@@ -5,7 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
-# Global Model Configuration (Lazy Loaded)
+# Global Model Configuration 
 _LLM = None
 
 def get_llm():

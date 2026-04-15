@@ -10,8 +10,8 @@ load_dotenv()
 
 class MongoManager:
     def __init__(self):
-        self.uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-        self.db_name = os.getenv("DATABASE_NAME", "medical_db")
+        self.uri = os.getenv("MONGODB_URI")
+        self.db_name = os.getenv("DATABASE_NAME")
         self.client = None
         self.db = None
 
@@ -35,19 +35,40 @@ class MongoManager:
 
     # --- Thread Management ---
 
-    async def create_thread(self, user_id: str, title: str = "New Conversation"):
+    async def create_thread(self, user_id: str, title: str = "New Visualizer Story"):
         await self.connect()
         new_thread = Thread(title=title)
         await self.db.users.update_one(
             {"user_id": user_id},
-            {"$push": {"threads": new_thread.dict()}}
+            {"$push": {"threads": new_thread.dict(exclude_none=True)}}
         )
         return new_thread
 
     async def get_user_threads(self, user_id: str):
+        """Returns full threads with all messages (Warning: slow if images are large)."""
         await self.connect()
         user = await self.db.users.find_one({"user_id": user_id}, {"threads": 1})
         return user.get("threads", []) if user else []
+
+    async def get_user_threads_summary(self, user_id: str):
+        """Returns only thread metadata (no messages) for fast sidebar loading."""
+        await self.connect()
+        user = await self.db.users.find_one(
+            {"user_id": user_id},
+            {"threads.thread_id": 1, "threads.title": 1, "threads.created_at": 1}
+        )
+        return user.get("threads", []) if user else []
+
+    async def get_thread_by_id(self, user_id: str, thread_id: str):
+        """Fetches a single thread including all messages directly from MongoDB."""
+        await self.connect()
+        user = await self.db.users.find_one(
+            {"user_id": user_id, "threads.thread_id": thread_id},
+            {"threads.$": 1}
+        )
+        if user and "threads" in user and len(user["threads"]) > 0:
+            return user["threads"][0]
+        return None
 
     async def delete_thread(self, user_id: str, thread_id: str):
         await self.connect()
@@ -58,7 +79,7 @@ class MongoManager:
 
     async def add_message_to_thread(self, user_id: str, thread_id: str, message: MessageLog):
         await self.connect()
-        # Update specific thread inside users array
+        # Update thread inside users array
         await self.db.users.update_one(
             {"user_id": user_id, "threads.thread_id": thread_id},
             {"$push": {"threads.$.messages": message.dict(exclude_none=True)}}

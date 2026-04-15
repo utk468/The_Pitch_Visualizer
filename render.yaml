@@ -1,18 +1,24 @@
 services:
   - type: web
-    name: Medical Agent
+    name: Pitch Visualizer
     plan: free
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT --log-level debug app:app
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GROQ_API_KEY
+        sync: false
+      - key: HF_API_KEY
         sync: false
       - key: MONGODB_URI
         sync: false
       - key: DATABASE_NAME
         sync: false
-      - key: SECRET_KEY
+      - key: JWT_SECRET_KEY
         sync: false
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: 3.10.0
+    disk:
+      name: pitch-storage
+      mountPath: /app/static/outputs
+      sizeGB: 1

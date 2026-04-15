@@ -8,11 +8,11 @@ import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("SERVER STARTUP: Initializing Medical AI", flush=True)
-    print("SERVER STARTUP COMPLETE: Ready for requests", flush=True)
+    print("SERVER STARTUP: Initializing Pitch Visualizer Reasoning Engine", flush=True)
+    print("SERVER STARTUP COMPLETE: Ready for storyboard generation", flush=True)
     yield
 
-app = FastAPI(title="Medical Triage AI - Optimized", lifespan=lifespan)
+app = FastAPI(title="The Pitch Visualizer - AI Storyboard Pro", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -35,6 +35,8 @@ async def register_page(request: Request):
     return templates.TemplateResponse(request=request, name="register.html")
 
 if __name__ == "__main__":
-    print("Starting Medical Triage AI Server...")
+    print("Starting Pitch Visualizer Server...")
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+

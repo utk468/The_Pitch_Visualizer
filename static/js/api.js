@@ -78,7 +78,7 @@ const API = {
     },
 
     // Chat Methods
-    sendMessage: async (message, threadId, history = []) => {
+    sendMessage: async (message, threadId, style = "digital_art", history = []) => {
         const token = localStorage.getItem('access_token');
         const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -92,6 +92,7 @@ const API = {
                 message, 
                 thread_id: threadId,
                 history,
+                style: style,
                 user_name: user.name,
                 user_email: user.email,
                 user_id: user.id

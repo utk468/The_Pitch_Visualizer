@@ -9,6 +9,5 @@ class UserDetails(BaseModel):
     name: Optional[str] = "Anonymous"
     email: str 
     hashed_password: str
-    # here adding list of threads for users
     threads: List[Thread] = [] 
     created_at: datetime = Field(default_factory=datetime.now)

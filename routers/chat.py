@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
-from backend.graph import triage_graph
-from backend.state import TriageState
+from backend.graph import pitch_graph
+from backend.state import PitchState
 from backend.database import db_manager
 from schema.user import UserDetails
-from schema.chat import MessageLog
+from schema.chat import MessageLog, UserMessage, BotMessage, Panel
 from fastapi.concurrency import run_in_threadpool
 
 router = APIRouter()
@@ -14,52 +14,49 @@ router = APIRouter()
 class ChatRequest(BaseModel):
     message: str
     thread_id: str 
-    history: List[str] = []
-    user_name: Optional[str] = "Anonymous"
-    user_email: Optional[str] = "None"
+    style: Optional[str] = "digital_art"
     user_id: Optional[str] = None 
 
 @router.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        # 1. Initialize Graph State
-        initial_state: TriageState = {
-            "query": request.message,
-            "history": request.history,
-            "intent": "",
-            "symptoms": [],
-            "risk_level": "Normal",
-            "final_response": ""
+        initial_state: PitchState = {
+            "narrative": request.message,
+            "style": request.style,
+            "segments": [],
+            "prompts": [],
+            "image_urls": [],
+            "storyboard": [],
+            "error": ""
         }
 
-        # 2. Run the reasoning engine
-        result = await run_in_threadpool(triage_graph.invoke, initial_state)
+        result = await pitch_graph.ainvoke(initial_state)
         
-        # 3. --- Persistence Logic (Nested Threads) ---
+        if result.get("error"):
+            raise Exception(result["error"])
+
         if request.user_id:
-            from schema.chat import UserMessage, BotMessage, MessageLog
-            
-            # Save User Message
             user_msg = UserMessage(query=request.message)
             wrapped_user_msg = MessageLog(user=user_msg)
             await db_manager.add_message_to_thread(request.user_id, request.thread_id, wrapped_user_msg)
 
-            # Save Bot Response
+            storyboard_panels = [
+                Panel(text=p["text"], prompt=p["prompt"], image_url=p["image_url"])
+                for p in result["storyboard"]
+            ]
+            
             bot_msg = BotMessage(
-                response=result["final_response"],
-                symptoms=result["symptoms"],
-                risk_level=result["risk_level"]
+                response="Here is your visual storyboard:",
+                storyboard=storyboard_panels
             )
             wrapped_bot_msg = MessageLog(bot=bot_msg)
             await db_manager.add_message_to_thread(request.user_id, request.thread_id, wrapped_bot_msg)
 
         return {
-            "response": result["final_response"],
-            "intent": result["intent"],
-            "symptoms": result["symptoms"],
-            "risk_level": result["risk_level"]
+            "response": "Success",
+            "storyboard": result["storyboard"]
         }
 
     except Exception as e:
-        print(f"Error in triage reasoning: {str(e)}", flush=True)
+        print(f"Error in Pitch reasoning: {str(e)}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
