@@ -3,8 +3,8 @@ services:
     name: Pitch Visualizer
     plan: free
     runtime: python
-    buildCommand: python -m pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 1 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT --log-level debug app:app
     envVars:
       - key: GROQ_API_KEY
         sync: false
