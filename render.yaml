@@ -18,7 +18,4 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: 3.10.0
-    disk:
-      name: pitch-storage
-      mountPath: /app/static/outputs
-      sizeGB: 1
+  
