@@ -17,9 +17,16 @@ class MongoManager:
 
     async def connect(self):
         if self.client is None:
+            if not self.uri or not self.db_name:
+                print("--- ERROR: MONGODB_URI or DATABASE_NAME not set in environment! ---", flush=True)
+                return
+                
             print(f"--- Connecting to MongoDB: {self.db_name} ---", flush=True)
-            self.client = AsyncIOMotorClient(self.uri)
-            self.db = self.client[self.db_name]
+            try:
+                self.client = AsyncIOMotorClient(self.uri)
+                self.db = self.client[self.db_name]
+            except Exception as e:
+                print(f"--- MONGODB CONNECTION FAILED: {e} ---", flush=True)
 
     async def close(self):
         if self.client:

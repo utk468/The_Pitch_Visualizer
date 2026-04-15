@@ -13,3 +13,6 @@ pillow
 requests
 langgraph
 huggingface_hub
+dnspython
+PyJWT
+gunicorn
