@@ -59,3 +59,15 @@ python app.py
 Deployment & Production
 Ready for scale. The included render.yaml allows for instant deployment to high-availability environments with persistent volume support.
 Live Demo: https://pitch-visualizer-izin.onrender.com
+
+
+
+## Demo Snippet
+
+<p align="center">
+  <img src="images/1.png" width="800"/>
+</p>
+
+<p align="center">
+  <img src="images/2.png" width="800"/>
+</p>
